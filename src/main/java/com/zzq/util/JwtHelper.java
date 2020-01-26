@@ -9,7 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
+import java.io.IOException;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -145,6 +147,22 @@ public class JwtHelper {
             logger.warn("[JWTHelper]-JWT解析出claims为空");
         }
         return retMap != null ? JSONObject.toJSONString(retMap) : null;
+    }
+
+    public static Map<String , Object> getUserInfo(HttpServletRequest request) throws IOException {
+        Map<String , Object> result = new HashMap<>();
+        String token = ControllerUtil.getParam(request).get("User-Token");
+
+        Claims claims = parseJWT(token);
+
+        for (String s : claims.keySet()) {
+            if("userId".equals(s)){
+                result.put(s , AESSecretUtil.decryptToStr(String.valueOf(claims.get(s)), SecretConstant.DATAKEY));
+            }else{
+                result.put(s , claims.get(s));
+            }
+        }
+        return result;
     }
 
     public static void main(String[] args) {
